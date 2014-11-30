@@ -1,0 +1,993 @@
+[{
+        scriptName: "Advance Decline Line",
+        scriptSource: 'study(title = "Advance Decline Line", shorttitle="ADL")
+        sym(s) => security(s, period, close)
+        difference = (sym("ADVN") - sym("DECN")) / (sym("UNCN") + 1)
+        adline = cum(difference > 0 ? sqrt(difference) : -sqrt(-difference))
+        plot(adline)
+        ',
+        scriptIdPart: "STD;Advance%1Decline%1Line"
+    }, {
+        scriptName: "Advance Decline Ratio",
+        scriptSource: 'study(title = "Advance Decline Ratio", shorttitle="ADR")
+        ratio(t1, t2, source) => security(t1, period, source) / security(t2, period, source)
+        plot(ratio("ADVN", "DECN", close))
+        ',
+        scriptIdPart: "STD;Advance%1Decline%1Ratio"
+    }, {
+        scriptName: "Arnaud Legoux Moving Average",
+        scriptSource: 'study(title = "Arnaud Legoux Moving Average", shorttitle="ALMA", overlay=true)
+
+            source = close
+
+            windowsize = input(title = "Window Size", type = integer, defval = 9)
+        offset = input(title = "Offset", type = float, defval = 0.85)
+        sigma = input(title = "Sigma", type = float, defval = 6)
+
+        plot(alma(source, windowsize, offset, sigma))
+        ',
+        scriptIdPart: "STD;Arnaud%1Legoux%1Moving%1Average"
+    }, {
+        scriptName: "Balance of Power",
+        scriptSource: 'study(title="Balance of Power")
+        plot((close - open) / (high - low), color = red)
+        ',
+        scriptIdPart: "STD;Balance%1of%1Power"
+    }, {
+        scriptName: "Chande Kroll Stop",
+        scriptSource: 'study(title = "Chande Kroll Stop", overlay=true)
+        p = input(10, minval = 1)
+        x = input(1, minval = 1)
+        q = input(9, minval = 1)
+        first_high_stop = highest(high, p) - x * atr(p)
+        first_low_stop = lowest(high, p) + x * atr(p)
+        stop_short = highest(first_high_stop, q)
+        stop_long = lowest(first_low_stop, q)
+        plot(stop_long, color = green)
+        plot(stop_short, color = red)
+        ',
+        scriptIdPart: "STD;Chande%1Kroll%1Stop"
+    }, {
+        scriptName: "Chop Zone",
+        scriptSource: 'study(title = "Chop Zone")
+
+            colorTurquoise = #34dddd
+colorDarkGreen = #006400
+colorPaleGreen = #98fb98
+colorLime = lime
+        colorDarkRed = #8B0000
+colorRed = red
+        colorOrange = orange
+        colorLightOrange = #ffc04c
+        colorYellow = yellow
+
+        source = close
+        avg = hlc3
+
+        pi = atan(1) * 4
+        periods = 30
+        highestHigh = highest(periods)
+        lowestLow = lowest(periods)
+        range = 25 / (highestHigh - lowestLow) * lowestLow
+
+        ema34 = ema(source, 34)
+        x1_ema34 = 0
+        x2_ema34 = 1
+        y1_ema34 = 0
+        y2_ema34 = (ema34[1] - ema34) / avg * range
+        c_ema34 = sqrt((x2_ema34 - x1_ema34) * (x2_ema34 - x1_ema34) + (y2_ema34 - y1_ema34) * (y2_ema34 - y1_ema34))
+        emaAngle_1 = round(180 * acos((x2_ema34 - x1_ema34) / c_ema34) / pi)
+        emaAngle = iff(y2_ema34 > 0, -emaAngle_1, emaAngle_1)
+
+        chopZoneColor = emaAngle >= 5 ? colorTurquoise : emaAngle < 5 and emaAngle >= 3.57 ? colorDarkGreen : emaAngle < 3.57 and emaAngle >= 2.14 ? colorPaleGreen : emaAngle < 2.14 and emaAngle >= .71 ? colorLime : emaAngle <= -1 * 5 ? colorDarkRed : emaAngle > -1 * 5 and emaAngle <= -1 * 3.57 ? colorRed : emaAngle > -1 * 3.57 and emaAngle <= -1 * 2.14 ? colorOrange : emaAngle > -1 * 2.14 and emaAngle <= -1 * .71 ? colorLightOrange : colorYellow
+
+            plot(1, color = chopZoneColor, style = columns)
+        ',
+        scriptIdPart: "STD;Chop%1Zone"
+    }, {
+        scriptName: "Compare",
+        scriptSource: 'study(title="Compare", shorttitle="Compare", overlay=false)
+        sym = "AAPL",
+        res = period,
+        source = close
+        plot(security(sym, res, source), color = purple, linewidth = 2)
+        ',
+        scriptIdPart: "STD;Compare"
+    }, {
+        scriptName: "Conditional Expressions",
+        scriptSource: 'study(title="Conditional Expressions")
+
+        // Plot will be green/red on DWM charts and yellow/blue on intraday
+            c = isdwm ? close >= open ? green : red : close >= open ? yellow : blue
+        plot(ohlc4, color = c)
+
+        // Another example of conditional expr:
+        c2 = isintraday ? red : isdaily ? green : isweekly ? blue : gray
+        plot(hl2, color = c2)
+        ',
+        scriptIdPart: "STD;Conditional%1Expressions"
+    }, {
+        scriptName: "Coppock Curve",
+        scriptSource: 'study(title = "Coppock Curve")
+
+            wmaLength = input(title = "WMA Length", type = integer, defval = 10)
+        longRoCLength = input(title = "Long RoC Length", type = integer, defval = 14)
+        shortRoCLength = input(title = "Short RoC Length", type = integer, defval = 11)
+
+        source = close
+
+        curve = wma(roc(source, longRoCLength) + roc(source, shortRoCLength), wmaLength)
+        plot(curve)
+        ',
+        scriptIdPart: "STD;Coppock%1Curve"
+    }, {
+        scriptName: "Cumulative Volume Index",
+        scriptSource: 'study("Cumulative Volume Index", "CVI")
+        exch = input(0, type = integer, minval = 0, maxval = 8,
+            title = "Exch: NYSE=0 NASDAQ=1 AMEX=2 OTC=3 TSX=4 TSXV=5 ETFS=6 Total=7 CAD Total=8")
+        adv_ticker =
+        exch == 8 ? "AVVX" : exch == 7 ? "AVVT" : exch == 6 ? "AVVE" : exch == 5 ? "AVVV" : exch == 4 ? "AVVS" : exch == 3 ? "AVVD" : exch == 2 ? "AVLU" : exch == 1 ? "AVVQ" : "AVVN"
+        dec_ticker =
+        exch == 8 ? "DVCX" : exch == 7 ? "DVCT" : exch == 6 ? "DVCE" : exch == 5 ? "DVCV" : exch == 4 ? "DVCS" : exch == 3 ? "DVCD" : exch == 2 ? "DVCA" : exch == 1 ? "DVCQ" : "DVCN"
+        adv = security(adv_ticker, period, close)
+        dec = security(dec_ticker, period, close)
+        cvi = cum(adv - dec)
+        plot(cvi, color = gray)
+        ',
+        scriptIdPart: "STD;Cumulative%1Volume%1Index"
+    }, {
+        scriptName: "Divergence Indicator",
+        scriptSource: 'study(title="Divergence Indicator")
+
+            osc = rsi(close, 14)
+
+        // Bullish
+            bullishPrice = low
+        priceMins = bullishPrice > bullishPrice[1] and bullishPrice[1] < bullishPrice[2]
+
+        priceRightMin = valuewhen(priceMins, bullishPrice[1], 0)
+        priceLeftMin = valuewhen(priceMins, bullishPrice[1], 1)
+
+        oscRightMin = valuewhen(priceMins, osc[1], 0)
+        oscLeftMin = valuewhen(priceMins, osc[1], 1)
+
+        bullishNDiv = priceLeftMin > priceRightMin and oscLeftMin < oscRightMin
+        bullishHDiv = priceLeftMin < priceRightMin and oscLeftMin > oscRightMin
+
+        bullishNSig = bullishNDiv and not bullishNDiv[1] and bullishPrice[1] < bullishPrice
+        bullishHSig = bullishHDiv and not bullishHDiv[1] and bullishPrice[1] > bullishPrice
+
+        plot(bullishNSig, title = "Normal Bullish Divergence", style = histogram, linewidth = 3, color = green)
+        plot(bullishHSig, title = "Hidden Bullish Divergence", style = histogram, linewidth = 1, color = green)
+
+        // Bearish
+        bearishPrice = high
+        priceMaxs = bearishPrice < bearishPrice[1] and bearishPrice[1] > bearishPrice[2]
+
+        priceRightMax = valuewhen(priceMaxs, bearishPrice[1], 0)
+        priceLeftMax = valuewhen(priceMaxs, bearishPrice[1], 1)
+
+        oscRightMax = valuewhen(priceMaxs, osc[1], 0)
+        oscLeftMax = valuewhen(priceMaxs, osc[1], 1)
+
+        bearishNDiv = priceLeftMax < priceRightMax and oscLeftMax > oscRightMax
+        bearishHDiv = priceLeftMax > priceRightMax and oscLeftMax < oscRightMax
+
+        bearishNSig = bearishNDiv and not bearishNDiv[1] and bearishPrice[1] < bearishPrice
+        bearishHSig = bearishHDiv and not bearishHDiv[1] and bearishPrice[1] > bearishPrice
+
+        plot(bearishNSig, title = "Normal Bearish Divergence", style = histogram, linewidth = 3, color = red)
+        plot(bearishHSig, title = "Hidden Bearish Divergence", style = histogram, linewidth = 1, color = red)
+        ',
+        scriptIdPart: "STD;Divergence%1Indicator"
+    }, {
+        scriptName: "Klinger Oscillator",
+        scriptSource: 'study(title="Klinger Oscillator")
+        sv = change(hlc3) >= 0 ? volume : -volume
+        kvo = ema(sv, 34) - ema(sv, 55)
+        sig = ema(kvo, 13)
+        plot(kvo)
+        plot(sig, color = green)
+        ',
+        scriptIdPart: "STD;Klinger%1Oscillator"
+    }, {
+        scriptName: "Least Squares Moving Average",
+        scriptSource: 'study(title = "Least Squares Moving Average", shorttitle="LSMA", overlay=true)
+
+            length = input(title = "Length", type = integer, defval = 25)
+        offset = input(title = "Offset", type = integer, defval = 0)
+
+        source = close
+
+        lsma = linreg(source, length, offset)
+        plot(lsma)
+        ',
+        scriptIdPart: "STD;Least%1Squares%1Moving%1Average"
+    }, {
+        scriptName: "MA Cross",
+        scriptSource: 'study(title="MA Cross", overlay=true)
+        short = sma(close, 9)
+        long = sma(close, 21)
+        plot(short, color = red)
+        plot(long, color = green)
+        plot(cross(short, long) ? short : na, style = cross, linewidth = 4)
+        ',
+        scriptIdPart: "STD;MA%1Cross"
+    }, {
+        scriptName: "Mass Index",
+        scriptSource: 'study(title="Mass Index")
+        length = input(10, minval = 1)
+        range = high - low
+        mi = sum(ema(range, 9) / ema(ema(range, 9), 9), length)
+        plot(mi)
+        ',
+        scriptIdPart: "STD;Mass%1Index"
+    }, {
+        scriptName: "McGinley Dynamic",
+        scriptSource: 'study(title="McGinley Dynamic", overlay=true)
+        length = input(14, minval = 1)
+        source = close
+        mg = na(mg[1]) ? ema(source, length) : mg[1] + (source - mg[1]) / (length * pow(source / mg[1], 4))
+        plot(mg)
+        ',
+        scriptIdPart: "STD;McGinley%1Dynamic"
+    }, {
+        scriptName: "Net Volume",
+        scriptSource: 'study(title="Net Volume")
+        src = close
+        nv = change(src) > 0 ? volume : change(src) < 0 ? -volume : 0 * volume
+        plot(nv, color = blue, title = "NV")
+        ',
+        scriptIdPart: "STD;Net%1Volume"
+    }, {
+        scriptName: "Smoothed Moving Average",
+        scriptSource: 'study(title = "Smoothed Moving Average", shorttitle="SMMA", overlay=true)
+        src = close
+        len = input(7, minval = 1, title = "Length")
+        smma = na(smma[1]) ? sma(src, len) : (smma[1] * (len - 1) + src) / len
+        plot(smma, color = red)
+        ',
+        scriptIdPart: "STD;Smoothed%1Moving%1Average"
+    }, {
+        scriptName: "True Strength Indicator",
+        scriptSource: 'study("True Strength Indicator", shorttitle="TSI")
+        long = input(title = "Long Length", type = integer, defval = 25)
+        short = input(title = "Short Length", type = integer, defval = 13)
+        signal = input(title = "Signal Length", type = integer, defval = 13)
+        price = close
+        double_smooth(src, long, short) =>
+        fist_smooth = ema(src, long)
+        ema(fist_smooth, short)
+        pc = change(price)
+        double_smoothed_pc = double_smooth(pc, long, short)
+        double_smoothed_abs_pc = double_smooth(abs(pc), long, short)
+        tsi_value = 100 * (double_smoothed_pc / double_smoothed_abs_pc)
+        plot(tsi_value, color = black)
+        plot(ema(tsi_value, signal), color = red)
+        hline(0, title = "Zero")
+        ',
+        scriptIdPart: "STD;True%1Strength%1Indicator"
+    }, {
+        scriptName: "Volume Oscillator",
+        scriptSource: 'study(title="Volume Oscillator", shorttitle="Volume Osc")
+        shortlen = input(5, minval = 1)
+        longlen = input(10, minval = 1)
+        short = ema(volume, shortlen)
+        long = ema(volume, longlen)
+        osc = 100 * (short - long) / long
+        hline(0, title = "Zero")
+        plot(osc)
+        ',
+        scriptIdPart: "STD;Volume%1Oscillator"
+    }, {
+        scriptName: "Vortex Indicator",
+        scriptSource: 'study(title = "Vortex Indicator", shorttitle="VI")
+        period_ = input(14, title = "Period", minval = 2)
+
+        VMP = sum(abs(high - low[1]), period_)
+        VMM = sum(abs(low - high[1]), period_)
+        STR = sum(atr(1), period_)
+        VIP = VMP / STR
+        VIM = VMM / STR
+
+        plot(VIP, title = "VI +", color = blue)
+        plot(VIM, title = "VI -", color = red)
+        ',
+        scriptIdPart: "STD;Vortex%1Indicator"
+    }, {
+        scriptName: "Woodies CCI",
+        scriptSource: 'study(title="Woodies CCI")
+
+            cciTurboLength = input(title = "CCI Turbo Length", type = integer, defval = 6, minval = 3, maxval = 14)
+        cci14Length = input(title = "CCI 14 Length", type = integer, defval = 14, minval = 7, maxval = 20)
+
+        source = close
+
+        cciTurbo = cci(source, cciTurboLength)
+        cci14 = cci(source, cci14Length)
+
+        last5IsDown = cci14[5] < 0 and cci14[4] < 0 and cci14[3] < 0 and cci14[2] < 0 and cci14[1] < 0
+        last5IsUp = cci14[5] > 0 and cci14[4] > 0 and cci14[3] > 0 and cci14[2] > 0 and cci14[1] > 0
+        histogramColor = last5IsUp ? green : last5IsDown ? red : cci14 < 0 ? green : red
+
+            plot(cci14, title = "CCI Turbo Histogram", color = histogramColor, style = histogram)
+        plot(cciTurbo, title = "CCI Turbo", color = green, style = line)
+        plot(cci14, title = "CCI 14", color = red, style = line)
+
+        hline(0, title = "Zero Line", color = black, linestyle = solid)
+        hline(100, title = "Hundred Line", color = black, linestyle = dotted)
+        hline(-100, title = "Minus Line", color = black, linestyle = dotted)
+        ',
+        scriptIdPart: "STD;Woodies%1CCI"
+    }, {
+        scriptName: "Accumulation/Distribution",
+        scriptSource: 'study(title="Accumulation/Distribution", shorttitle="Accum/Dist", overlay=false)
+        ad = cum(close == high and close == low or high == low ? 0 : ((2 * close - low - high) / (high - low)) * volume)
+        plot(ad, title = "Accumulation/Distribution", color = olive)
+        '
+    }, {
+        scriptName: "Advance/Decline Ratio (Bars)",
+        scriptSource: 'study("Advance/Decline Ratio (Bars)", shorttitle="ADR_B")
+        length = input(9, minval = 1)
+        isUp = (close - open) >= 0.0
+        upBars = sum(isUp, length)
+        downBars = sum(not isUp, length)
+        ad = downBars == 0 ? upBars : upBars / downBars
+        plot(ad, color = blue)
+        hline(1.0)
+        '
+    }, {
+        scriptName: "Aroon",
+        scriptSource: 'study(title="Aroon", shorttitle="Aroon", overlay=false)
+        length = input(14, minval = 1)
+        upper = 100 * (highestbars(high, length + 1) + length) / length
+        lower = 100 * (lowestbars(low, length + 1) + length) / length
+        plot(upper, color = #FF6A00)
+        plot(lower, color = #0094FF)
+'
+}, {
+    scriptName: "Average True Range",
+    scriptSource: 'study(title= "Average True Range", shorttitle = "ATR", overlay = false)
+        length = input(14, minval = 1)
+        plot(rma(tr, length), color = red)
+        '
+    }, {
+        scriptName: "Awesome Oscillator",
+        scriptSource: 'study(title="Awesome Oscillator", shorttitle="AO")
+        ao = sma(hl2, 5) - sma(hl2, 34)
+        plot(ao, color = change(ao) <= 0 ? red : green, style = histogram)
+        '
+    }, {
+        scriptName: "Bollinger Bands",
+        scriptSource: 'study(shorttitle="BB", title="Bollinger Bands", overlay=true)
+        source = close
+        length = input(20, minval = 1),
+        mult = input(2.0, minval = 0.001, maxval = 50)
+        basis = sma(source, length)
+        dev = mult * stdev(source, length)
+        upper = basis + dev
+        lower = basis - dev
+        plot(basis, color = red)
+        p1 = plot(upper, color = blue)
+        p2 = plot(lower, color = blue)
+        fill(p1, p2)
+        '
+    }, {
+        scriptName: "Bollinger Bands %B",
+        scriptSource: 'study(title = "Bollinger Bands %B", shorttitle = "BB %B")
+        source = close
+        length = input(20, minval = 1),
+        mult = input(2.0, minval = 0.001, maxval = 50)
+        basis = sma(source, length)
+        dev = mult * stdev(source, length)
+        upper = basis + dev
+        lower = basis - dev
+        bbr = (source - lower) / (upper - lower)
+        plot(bbr, color = teal)
+        band1 = hline(1, color = gray, linestyle = dashed)
+        band0 = hline(0, color = gray, linestyle = dashed)
+        fill(band1, band0, color = teal)
+        '
+    }, {
+        scriptName: "Bollinger Bands Width",
+        scriptSource: 'study(title="Bollinger Bands Width", shorttitle="BBW")
+        source = close
+        length = input(20, minval = 1),
+        mult = input(2.0, minval = 0.001, maxval = 50)
+        basis = sma(source, length)
+        dev = mult * stdev(source, length)
+        upper = basis + dev
+        lower = basis - dev
+        bbw = (upper - lower) / basis
+        plot(bbw, color = blue)
+        '
+    }, {
+        scriptName: "Chaikin Money Flow",
+        scriptSource: 'study(title="Chaikin Money Flow", shorttitle="CMF")
+        length = input(20, minval = 1)
+        ad = close == high and close == low or high == low ? 0 : ((2 * close - low - high) / (high - low)) * volume
+        mf = sum(ad, length) / sum(volume, length)
+        plot(mf, color = green, title = "MF")
+        hline(0, color = gray, title = "Zero", linestyle = dashed)
+        '
+    }, {
+        scriptName: "Chaikin Oscillator",
+        scriptSource: 'study(title="Chaikin Oscillator", shorttitle="Chaikin Osc")
+        short = input(3, minval = 1),
+        long = input(10, minval = 1)
+        osc = ema(accdist, short) - ema(accdist, long)
+        plot(osc, color = red)
+        hline(0, color = gray, linestyle = dashed)
+        '
+    }, {
+        scriptName: "Chande Momentum Oscillator",
+        scriptSource: 'study(title="Chande Momentum Oscillator", shorttitle="ChandeMO")
+        length = input(9, minval = 1)
+        src = close
+        momm = change(src)
+        f1(m) => m >= 0.0 ? m : 0.0
+        f2(m) => m >= 0.0 ? 0.0 : -m
+        m1 = f1(momm)
+        m2 = f2(momm)
+        sm1 = sum(m1, length)
+        sm2 = sum(m2, length)
+        percent(nom, div) => 100 * nom / div
+        chandeMO = percent(sm1 - sm2, sm1 + sm2)
+        plot(chandeMO, color = teal)
+        '
+    }, {
+        scriptName: "Choppiness Index",
+        scriptSource: 'study(title="Choppiness Index", shorttitle="CHOP")
+        length = input(14, minval = 1)
+        ci = 100 * log10(sum(atr(1), length) / (highest(length) - lowest(length))) / log10(length)
+        plot(ci, color = blue)
+        band1 = hline(61.8, color = gray, linestyle = dashed)
+        band0 = hline(38.2, color = gray, linestyle = dashed)
+        fill(band1, band0, color = green)
+        '
+    }, {
+        scriptName: "Commodity Channel Index",
+        scriptSource: 'study(title="Commodity Channel Index", shorttitle="CCI")
+        source = close,
+        length = input(20, minval = 1)
+        ma = sma(source, length)
+        cci = (source - ma) / (0.015 * dev(source, length))
+        plot(cci, color = olive)
+        band1 = hline(100, color = gray, linestyle = dashed)
+        band0 = hline(-100, color = gray, linestyle = dashed)
+        fill(band1, band0, color = olive)
+        '
+    }, {
+        scriptName: "Connors RSI",
+        scriptSource: 'study(title="Connors RSI")
+        src = close,
+        lenrsi = 3,
+        lenupdown = 2,
+        lenroc = 100
+        updown(s) =>
+        isEqual = s == s[1]
+        isGrowing = s > s[1]
+        ud = isEqual ? 0 : isGrowing ? (nz(ud[1]) <= 0 ? 1 : nz(ud[1]) + 1) : (nz(ud[1]) >= 0 ? -1 : nz(ud[1]) - 1)
+        ud
+        rsi = rsi(src, lenrsi)
+        updownrsi = rsi(updown(src), lenupdown)
+        percentrank = percentrank(roc(src, 1), lenroc)
+        crsi = avg(rsi, updownrsi, percentrank)
+        plot(crsi)
+        band1 = hline(70)
+        band0 = hline(30)
+        fill(band1, band0)
+        '
+    }, {
+        scriptName: "Correlation Coeff",
+        scriptSource: 'study(title="Correlation Coeff", shorttitle="CC")
+        sym = "GOOG",
+        res = period,
+        src = close,
+        length = input(20, minval = 1)
+        ovr = security(sym, res, src)
+        plot(correlation(src, ovr, length), color = purple, style = area, transp = 40)
+        '
+    }, {
+        scriptName: "Detrended Price Oscillator",
+        scriptSource: 'study(title="Detrended Price Oscillator", shorttitle="DPO")
+        period_ = input(21, title = "Period", minval = 1),
+        isCentered = input(false)
+        barsback = period_ / 2 + 1
+        ma = sma(close, period_)
+        dpo = isCentered ? close[barsback] - ma : close - ma[barsback]
+        plot(dpo, offset = isCentered ? -barsback : 0, title = "DPO", color = olive)
+        hline(0, title = "Zero")
+        '
+    }, {
+        scriptName: "Directional Movement Index",
+        scriptSource: 'study(title="Directional Movement Index", shorttitle="DMI")
+        len = input(14, minval = 1, title = "DI Length")
+        lensig = input(14, title = "ADX Smoothing", minval = 1, maxval = 50)
+        up = change(high)
+        down = -change(low)
+        trur = rma(tr, len)
+        plus = fixnan(100 * rma(up > down and up > 0 ? up : 0, len) / trur)
+        minus = fixnan(100 * rma(down > up and down > 0 ? down : 0, len) / trur)
+        sum = plus + minus
+        adx = 100 * rma(abs(plus - minus) / (sum == 0 ? 1 : sum), lensig)
+        plot(plus, color = blue, title = "+DI")
+        plot(minus, color = orange, title = "-DI")
+        plot(adx, color = red, title = "ADX")
+        '
+    }, {
+        scriptName: "Donchian Channels",
+        scriptSource: 'study(title="Donchian Channels", shorttitle="DC", overlay=true)
+        length = input(20, minval = 1)
+        lower = lowest(length)
+        upper = highest(length)
+        basis = avg(upper, lower)
+        l = plot(lower, color = blue)
+        u = plot(upper, color = blue)
+        plot(basis, color = orange)
+        fill(u, l, color = blue)
+        '
+    }, {
+        scriptName: "Double Exponential Moving Average",
+        scriptSource: 'study(title="Double Exponential Moving Average", shorttitle="DEMA", overlay=true)
+        length = input(9, minval = 1)
+        e1 = ema(close, length)
+        e2 = ema(e1, length)
+        dema = 2 * e1 - e2
+        plot(dema, color = green)
+        '
+    }, {
+        scriptName: "Ease of Movement",
+        scriptSource: 'study(title="Ease of Movement", shorttitle="EOM")
+        div = input(10000, title = "Divisor", minval = 1)
+        length = input(14, minval = 1)
+        eom = sma(div * change(hl2) * (high - low) / volume, length)
+        plot(eom, color = olive)
+        '
+    }, {
+        scriptName: "Elder's Force Index",
+        scriptSource: 'study(title="Elder\'s Force Index", shorttitle="EFI")
+        length = input(13, minval = 1)
+        efi = sma(change(close) * volume, length)
+        plot(efi, color = maroon, title = "EFI")
+        hline(0, title = "Zero")
+        '
+    }, {
+        scriptName: "Envelope",
+        scriptSource: 'study(title="Envelope", shorttitle="Env", overlay=true)
+        src = close,
+        len = input(20, title = "Length", minval = 1)
+        percent = input(10.0),
+        exponential = input(false)
+        basis = exponential ? ema(src, len) : sma(src, len)
+        k = percent / 100.0
+        upper = basis * (1 + k)
+        lower = basis * (1 - k)
+        plot(basis, color = orange)
+        u = plot(upper, color = blue)
+        l = plot(lower, color = blue)
+        fill(u, l, color = blue)
+        '
+    }, {
+        scriptName: "Fisher Transform",
+        scriptSource: 'study(title="Fisher Transform", shorttitle="Fisher")
+        len = input(9, minval = 1, title = "Length")
+        high_ = highest(hl2, len)
+        low_ = lowest(hl2, len)
+        round_(val) => val > .99 ? .999 : val < -.99 ? -.999 : val
+        value = round_(.66 * ((hl2 - low_) / max(high_ - low_, .001) - .5) + .67 * nz(value[1]))
+        fish1 = .5 * log((1 + value) / max(1 - value, .001)) + .5 * nz(fish1[1])
+        fish2 = fish1[1]
+        hline(1.5, color = orange)
+        hline(0.75)
+        hline(0, color = orange)
+        hline(-0.75)
+        hline(-1.5, color = orange)
+        plot(fish1, color = blue, title = "Fisher")
+        plot(fish2, color = orange, title = "Trigger")
+        '
+    }, {
+        scriptName: "Function Definition",
+        scriptSource: 'study(title="Function Definition")
+            // simple function with two args
+        f1(x, y) => x + y
+
+        // function without args, note: we can use built-in globals such as "close"
+        f2() => close * 2
+
+        // You may call one function from another
+        f3() => f1(open, close) + f2()
+
+        plot(f1(open, close), color = red)
+        plot(f2() * 0.9, color = green)
+        plot(f3() / 2.1, color = blue)
+        '
+    }, {
+        scriptName: "Historical Volatility",
+        scriptSource: 'study(title="Historical Volatility", shorttitle="HV")
+        length = input(10, minval = 1)
+        annual = 365
+        per = isintraday or isdaily and interval == 1 ? 1 : 7
+        hv = 100 * stdev(log(close / close[1]), length) * sqrt(annual / per)
+        plot(hv, color = blue)
+        '
+    }, {
+        scriptName: "Hull MA",
+        scriptSource: 'study(title = "Hull MA", shorttitle="HMA", overlay = true)
+        source = close,
+        length = input(9, minval = 1)
+        hullma = wma(2 * wma(source, length / 2) - wma(source, length), round(sqrt(length)))
+        plot(hullma)
+        '
+    }, {
+        scriptName: "Ichimoku Cloud",
+        scriptSource: 'study(title="Ichimoku Cloud", shorttitle="Ichimoku", overlay=true)
+
+            conversionPeriods = input(9, minval = 1),
+        basePeriods = input(26, minval = 1)
+        laggingSpan2Periods = input(52, minval = 1),
+        displacement = input(26, minval = 1)
+
+        donchian(len) => avg(lowest(len), highest(len))
+
+        conversionLine = donchian(conversionPeriods)
+        baseLine = donchian(basePeriods)
+        leadLine1 = avg(conversionLine, baseLine)
+        leadLine2 = donchian(laggingSpan2Periods)
+
+        plot(conversionLine, color = blue, title = "Conversion Line")
+        plot(baseLine, color = red, title = "Base Line")
+        plot(close, offset = -displacement, color = green, title = "Lagging Span")
+
+        p1 = plot(leadLine1, offset = displacement, color = green,
+            title = "Lead 1")
+        p2 = plot(leadLine2, offset = displacement, color = red,
+            title = "Lead 2")
+        fill(p1, p2)
+        '
+    }, {
+        scriptName: "Keltner Channels",
+        scriptSource: 'study(title="Keltner Channels", shorttitle="KC", overlay=true)
+        source = close
+        useTrueRange = input(true)
+        length = input(20, minval = 1)
+        mult = input(1.0)
+        ma = ema(source, length)
+        range = useTrueRange ? tr : high - low
+        rangema = ema(range, length)
+        upper = ma + rangema * mult
+        lower = ma - rangema * mult
+        c = blue
+        u = plot(upper, color = c, title = "Upper")
+        plot(ma, color = c, title = "Basis")
+        l = plot(lower, color = c, title = "Lower")
+        fill(u, l, color = c)
+        '
+    }, {
+        scriptName: "Know Sure Thing",
+        scriptSource: 'study(title="Know Sure Thing", shorttitle="KST")
+        roclen1 = input(10, minval = 1)
+        roclen2 = input(15, minval = 1)
+        roclen3 = input(20, minval = 1)
+        roclen4 = input(30, minval = 1)
+        smalen1 = input(10, minval = 1)
+        smalen2 = input(10, minval = 1)
+        smalen3 = input(10, minval = 1)
+        smalen4 = input(15, minval = 1)
+        siglen = input(9, minval = 1)
+        smaroc(roclen, smalen) => sma(roc(close, roclen), smalen)
+        kst = smaroc(roclen1, smalen1) + 2 * smaroc(roclen2, smalen2) + 3 * smaroc(roclen3, smalen3) + 4 * smaroc(roclen4, smalen4)
+        sig = sma(kst, siglen)
+        plot(kst, color = green, title = "KST")
+        plot(sig, color = red, title = "Signal")
+        hline(0, title = "Zero")
+        '
+    }, {
+        scriptName: "Linear Regression Curve",
+        scriptSource: 'study(title="Linear Regression Curve", shorttitle="LRC", overlay=true)
+        src = close
+        len = input(defval = 9, minval = 1, title = "Length")
+        offset = 0
+        out = linreg(src, len, offset)
+        plot(out)
+        '
+    }, {
+        scriptName: "Momentum",
+        scriptSource: 'study(title="Momentum", shorttitle="Mom")
+        src = close,
+        len = input(10, minval = 1, title = "Length")
+        mom = src - src[len]
+        plot(mom, color = olive, title = "Mom")
+        '
+    }, {
+        scriptName: "Money Flow",
+        scriptSource: 'study(title="Money Flow", shorttitle="MFI")
+        length = input(title = "Length", type = integer, defval = 14, minval = 1, maxval = 2000)
+        src = hlc3
+        upper = sum(volume * (change(src) <= 0 ? 0 : src), length)
+        lower = sum(volume * (change(src) >= 0 ? 0 : src), length)
+        mf = rsi(upper, lower)
+        plot(mf, color = #459915)
+overbought= hline(80, title = "Overbought", color = #c0c0c0) oversold = hline(20, title = "Oversold", color = #c0c0c0) fill(overbought, oversold, color = #9915ff, transp= 90)
+            '
+        },
+        {
+            scriptName: "Moving Avarage Exponentional",
+            scriptSource: 'study(title="Moving Avarage Exponentional", shorttitle="EMA", overlay=true)
+            src = close,
+            len = input(9, minval = 1, title = "Length")
+            out = ema(src, len)
+            plot(out, title = "EMA", color = blue)
+            '
+        },
+        {
+            scriptName: "Moving Avarage Weighted",
+            scriptSource: 'study(title="Moving Avarage Weighted", shorttitle="WMA", overlay=true)
+            src = close,
+            len = input(9, minval = 1, title = "Length")
+            out = wma(src, len)
+            plot(out, title = "WMA", color = blue)
+            '
+        },
+        {
+            scriptName: "Moving Average",
+            scriptSource: 'study(title="Moving Average", shorttitle="MA", overlay=true)
+            src = close,
+            len = input(9, minval = 1, title = "Length")
+            out = sma(src, len)
+            plot(out, color = blue, title = "MA")
+            '
+        },
+        {
+            scriptName: "Moving Average Convergence/Divergence",
+            scriptSource: 'study(title="Moving Average Convergence/Divergence", shorttitle="MACD")
+            source = close
+            fastLength = input(12, minval = 1),
+            slowLength = input(26, minval = 1)
+            signalLength = input(9, minval = 1)
+            fastMA = ema(source, fastLength)
+            slowMA = ema(source, slowLength)
+            macd = fastMA - slowMA
+            signal = sma(macd, signalLength)
+            hist = macd - signal
+            plot(hist, color = red, style = histogram)
+            plot(macd, color = blue)
+            plot(signal, color = orange)
+            '
+        },
+        {
+            scriptName: "On Balance Volume",
+            scriptSource: 'study(title="On Balance Volume", shorttitle="OBV")
+            src = close
+            obv = cum(change(src) > 0 ? volume : change(src) < 0 ? -volume : 0 * volume)
+            plot(obv, color = blue, title = "OBV")
+            '
+        },
+        {
+            scriptName: "Parabolic SAR",
+            scriptSource: 'study(title="Parabolic SAR", shorttitle="SAR", overlay=true)
+            start = input(0.02)
+            increment = input(0.02)
+            maximum = input(0.2)
+            out = sar(start, increment, maximum)
+            plot(out, style = cross, color = blue)
+            '
+        },
+        {
+            scriptName: "Plot Offsets",
+            scriptSource: 'study(title = "Plot Offsets")
+            plot(close, title = "Positive", offset = 15)
+            plot(open, title = "Negative", offset = -7)
+            plot(high, title = "Zero", offset = 0)
+            plot(low, title = "Default")
+            '
+        },
+        {
+            scriptName: "Price Oscillator",
+            scriptSource: 'study(title="Price Oscillator", shorttitle="PPO")
+            src = close,
+            shortlen = input(10, minval = 1),
+            longlen = input(21, minval = 1)
+            short = sma(src, shortlen)
+            long = sma(src, longlen)
+            po = (short - long) / long * 100
+            plot(po, color = blue, title = "PPO")
+            '
+        },
+        {
+            scriptName: "Price Volume Trend",
+            scriptSource: 'study(title="Price Volume Trend", shorttitle="PVT")
+            src = close
+            vt = cum(change(src) / src[1] * volume)
+            plot(vt, color = blue, title = "PVT")
+            '
+        },
+        {
+            scriptName: "Rate Of Change",
+            scriptSource: 'study(title="Rate Of Change", shorttitle="ROC")
+            source = close,
+            length = input(9, minval = 1)
+            roc = 100 * (source - source[length]) / source[length]
+            plot(roc, color = blue, title = "ROC")
+            hline(0, title = "Zero Line")
+            '
+        },
+        {
+            scriptName: "Relative Strength Index",
+            scriptSource: 'study(title="Relative Strength Index", shorttitle="RSI")
+            src = close,
+            len = input(14, minval = 1, title = "Length")
+            up = rma(max(change(src), 0), len)
+            down = rma(-min(change(src), 0), len)
+            rsi = down == 0 ? 100 : up == 0 ? 0 : 100 - (100 / (1 + up / down))
+            plot(rsi, color = purple)
+            band1 = hline(70)
+            band0 = hline(30)
+            fill(band1, band0, color = purple, transp = 90)
+            '
+        },
+        {
+            scriptName: "Relative Vigor Index",
+            scriptSource: 'study(title="Relative Vigor Index", shorttitle="RVGI")
+            len = input(10, title = "Length", minval = 1)
+            rvi = sum(swma(close - open), len) / sum(swma(high - low), len)
+            sig = swma(rvi)
+            plot(rvi, color = green, title = "RVGI")
+            plot(sig, color = red, title = "Signal")
+            '
+        },
+        {
+            scriptName: "Relative Volatility Index",
+            scriptSource: 'study(title="Relative Volatility Index", shorttitle="RVI")
+            length = input(10, minval = 1),
+            src = close
+            len = 14
+            stddev = stdev(src, length)
+            upper = ema(change(src) <= 0 ? 0 : stddev, len)
+            lower = ema(change(src) > 0 ? 0 : stddev, len)
+            rvi = upper / (upper + lower) * 100
+            h0 = hline(80)
+            h1 = hline(20)
+            fill(h0, h1, color = olive)
+            plot(rvi, title = "RVI")
+            '
+        },
+        {
+            scriptName: "SMI Ergodic Indicator/Oscillator",
+            scriptSource: 'study(title="SMI Ergodic Indicator/Oscillator", shorttitle="SMIIO")
+            shortlen = input(5, minval = 1, title = "Short Period")
+            longlen = input(20, minval = 1, title = "Long Period")
+            siglen = input(5, minval = 1, title = "Signal Line Period)")
+            erg = tsi(close, shortlen, longlen)
+            sig = ema(erg, siglen)
+            osc = erg - sig
+            plot(erg, color = blue, title = "Indicator")
+            plot(sig, color = orange, title = "Signal")
+            plot(osc, color = red, style = histogram, title = "Oscillator")
+            '
+        },
+        {
+            scriptName: "Stochastic",
+            scriptSource: 'study(title="Stochastic", shorttitle="Stoch")
+            length = input(14, minval = 1),
+            smoothK = input(1, minval = 1),
+            smoothD = input(3, minval = 1)
+            k = sma(stoch(close, high, low, length), smoothK)
+            d = sma(k, smoothD)
+            plot(k, color = blue)
+            plot(d, color = orange)
+            h0 = hline(80)
+            h1 = hline(20)
+            fill(h0, h1, color = purple, transp = 75)
+            '
+        },
+        {
+            scriptName: "Stochastic RSI",
+            scriptSource: 'study(title="Stochastic RSI", shorttitle="Stoch RSI")
+            source = close
+            lengthRSI = input(14, minval = 1),
+            lengthStoch = input(14, minval = 1)
+            smoothK = input(3, minval = 1),
+            smoothD = input(3, minval = 1)
+            rsi1 = rsi(source, lengthRSI)
+            k = sma(stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+            d = sma(k, smoothD)
+            plot(k, color = blue)
+            plot(d, color = orange)
+            h0 = hline(80)
+            h1 = hline(20)
+            fill(h0, h1, color = purple, transp = 80)
+            '
+        },
+        {
+            scriptName: "Triple EMA",
+            scriptSource: 'study(title="Triple EMA", shorttitle="TEMA", overlay=true)
+            length = input(9, minval = 1)
+            ema1 = ema(close, length)
+            ema2 = ema(ema1, length)
+            ema3 = ema(ema2, length)
+            out = 3 * (ema1 - ema2) + ema3
+            plot(out, color = green)
+            '
+        },
+        {
+            scriptName: "TRIX",
+            scriptSource: 'study(title="TRIX", shorttitle="TRIX")
+            length = input(18, minval = 1)
+            out = 10000 * change(ema(ema(ema(log(close), length), length), length))
+            plot(out, color = maroon, title = "TRIX")
+            hline(0, title = "Zero")
+            '
+        },
+        {
+            scriptName: "Ultimate Oscillator",
+            scriptSource: 'study(title="Ultimate Oscillator", shorttitle="UO")
+            length7 = input(7, minval = 1),
+            length14 = input(14, minval = 1),
+            length28 = input(28, minval = 1)
+            average(bp, tr_, length) => sum(bp, length) / sum(tr_, length)
+            high_ = max(high, close[1])
+            low_ = min(low, close[1])
+            bp = close - low_
+            tr_ = high_ - low_
+            avg7 = average(bp, tr_, length7)
+            avg14 = average(bp, tr_, length14)
+            avg28 = average(bp, tr_, length28)
+            out = 100 * (4 * avg7 + 2 * avg14 + avg28) / 7
+            plot(out, color = red, title = "UO")
+            '
+        },
+        {
+            scriptName: "Volume",
+            scriptSource: 'study(title="Volume", shorttitle="Vol", precision=0)
+            showMA = input(true)
+            plot(volume, color = open > close ? red : green, style = columns, title = "Volume MA", transp = 65)
+            plot(showMA ? sma(volume, 20) : na, style = area, color = blue, title = "Volume", transp = 65)
+            '
+        },
+        {
+            scriptName: "VWAP",
+            scriptSource: 'study(title="VWAP", shorttitle="VWAP", overlay=true)
+            out = vwap(hlc3)
+            plot(out, title = "VWAP", color = blue)
+            '
+        },
+        {
+            scriptName: "VWMA",
+            scriptSource: 'study(title="VWMA", shorttitle="VWMA", overlay=true)
+            src = close,
+            len = input(20, minval = 1)
+            ma = vwma(src, len)
+            plot(ma, title = "VWMA", color = blue)
+            '
+        },
+        {
+            scriptName: "Willams %R",
+            scriptSource: 'study(title="Willams %R", shorttitle="%R")
+            length = input(14, minval = 1)
+            upper = highest(length)
+            lower = lowest(length)
+            out = 100 * (close - upper) / (upper - lower)
+            plot(out)
+            band1 = hline(-20)
+            band0 = hline(-80)
+            fill(band1, band0)
+            '
+        },
+        {
+            scriptName: "Williams Alligator",
+            scriptSource: 'study(title="Williams Alligator", shorttitle="Alligator", overlay=true)
+            jawLength = input(21, minval = 1, title = "Jaw Length")
+            teethLength = input(13, minval = 1, title = "Teeth Length")
+            lipsLength = input(8, minval = 1, title = "Lips Length")
+            jawOffset = input(8, title = "Jaw Offset")
+            teethOffset = input(5, title = "Teeth Offset")
+            lipsOffset = input(3, title = "Lips Offset")
+            jaw = ema(hl2, jawLength)
+            teeth = ema(hl2, teethLength)
+            lips = ema(hl2, lipsLength)
+            plot(jaw, offset = jawOffset, color = blue)
+            plot(teeth, offset = teethOffset, color = red)
+            plot(lips, offset = lipsOffset, color = green)
+            '
+        }]
